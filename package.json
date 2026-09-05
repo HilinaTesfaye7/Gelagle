@@ -4,6 +4,9 @@
   "private": true,
   "description": "AI-Powered Project & Delivery Command Center - Phase 1",
   "type": "module",
+  "engines": {
+    "node": ">=22.x"
+  },
   "scripts": {
     "dev:server": "tsx watch server/src/server.ts",
     "dev:client": "vite",

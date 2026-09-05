@@ -13,7 +13,7 @@ export function createApp(): Express {
   // Middleware
   app.use(
     cors({
-      origin: [config.corsOrigin, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+      origin: true,
       credentials: true
     })
   );
@@ -25,8 +25,10 @@ export function createApp(): Express {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // API Routes
-  app.use('/api', createRouter());
+  // API Routes (mounted at /api and root to support direct or rewritten serverless execution)
+  const apiRouter = createRouter();
+  app.use('/api', apiRouter);
+  app.use('/', apiRouter);
 
   // Static Frontend files if built
   const clientDist = path.resolve(process.cwd(), 'client/dist');

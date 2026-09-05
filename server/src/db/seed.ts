@@ -142,6 +142,22 @@ export function seedDatabase(): void {
       telegram_user_id: null,
       telegram_chat_id: null,
       telegram_username: null
+    },
+    {
+      id: 'usr-hilina-09',
+      name: 'Hilina Tesfaye',
+      email: 'helu777@commandcenter.local',
+      username: 'helu777',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      timezone: 'UTC',
+      active: 1,
+      availability_status: 'AVAILABLE',
+      skills: JSON.stringify(['QA Automation', 'Testing', 'Telegram Bot Integration', 'Delivery Governance']),
+      notification_preferences: JSON.stringify({ email: true, telegram: true, mentions: true }),
+      daily_checkin_enabled: 1,
+      telegram_user_id: '347835367',
+      telegram_chat_id: '347835367',
+      telegram_username: 'Helu777'
     }
   ];
 
@@ -254,6 +270,7 @@ export function seedDatabase(): void {
     { id: 'mem-nx-5', project_id: 'proj-nexus-01', user_id: 'usr-backend-05', role: Role.BACKEND_DEVELOPER, responsibilities: 'Core API & Database Migrations' },
     { id: 'mem-nx-6', project_id: 'proj-nexus-01', user_id: 'usr-frontend-06', role: Role.FRONTEND_DEVELOPER, responsibilities: 'Command Center UI & State Management' },
     { id: 'mem-nx-7', project_id: 'proj-nexus-01', user_id: 'usr-designer-07', role: Role.DESIGNER, responsibilities: 'Design System & Component Specs' },
+    { id: 'mem-nx-8', project_id: 'proj-nexus-01', user_id: 'usr-hilina-09', role: Role.QA_ENGINEER, responsibilities: 'QA Automation & Telegram Standups' },
 
     // CyberShield (Notice: Dave Miller is QA_ENGINEER here, NOT QA_LEAD!)
     { id: 'mem-cs-1', project_id: 'proj-cybershield-02', user_id: 'usr-pm-01', role: Role.PROJECT_MANAGER, responsibilities: 'Delivery Coordinator' },
@@ -330,6 +347,15 @@ export function seedDatabase(): void {
       telegram_user_id: '10005',
       telegram_chat_id: 'chat_10005',
       username: 'marcus_backend',
+      verified: 1,
+      verification_code: null
+    },
+    {
+      id: 'tg-3',
+      user_id: 'usr-hilina-09',
+      telegram_user_id: '347835367',
+      telegram_chat_id: '347835367',
+      username: 'Helu777',
       verified: 1,
       verification_code: null
     }
@@ -442,7 +468,67 @@ export function seedDatabase(): void {
     );
   }
 
-  console.log('[SEED] Demo database successfully seeded with 8 users across 8 roles, 3 projects, teams, and logs.');
+  // Seed Initial Daily Standup Updates
+  const dailyUpdates = [
+    {
+      id: 'upd-hilina-01',
+      project_id: 'proj-nexus-01',
+      user_id: 'usr-hilina-09',
+      user_name: 'Hilina Tesfaye',
+      role: 'QA_ENGINEER',
+      q1_question: '🔍 What test scenarios did you execute today and what was the pass rate?',
+      q1_answer: 'hdhdfh,1005',
+      q2_question: '🐞 Did you log any new bugs or verify any resolved defect fixes?',
+      q2_answer: 'UES YEJRR',
+      q3_question: '🚧 Are test builds or test environments stable and unblocked?',
+      q3_answer: 'STABLE',
+      source: 'TELEGRAM',
+      created_at: now
+    },
+    {
+      id: 'upd-backend-02',
+      project_id: 'proj-nexus-01',
+      user_id: 'usr-backend-05',
+      user_name: 'Marcus Vance',
+      role: 'BACKEND_DEVELOPER',
+      q1_question: '⚙️ What APIs, databases, microservices, or backend PRs did you work on today?',
+      q1_answer: 'Implemented SQLite WAL mode and Telegram bot long-polling listener',
+      q2_question: '🎯 What backend features or integrations are planned next?',
+      q2_answer: 'Write end-to-end integration tests and refine UI components',
+      q3_question: '🚧 Any technical blockers, third-party outages, or review delays?',
+      q3_answer: 'None, everything is running smoothly',
+      source: 'TELEGRAM',
+      created_at: now
+    }
+  ];
+
+  const insertDailyUpdate = db.prepare(`
+    INSERT OR REPLACE INTO daily_updates (
+      id, project_id, user_id, user_name, role,
+      q1_question, q1_answer, q2_question, q2_answer, q3_question, q3_answer,
+      source, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  for (const u of dailyUpdates) {
+    insertDailyUpdate.run(
+      u.id,
+      u.project_id,
+      u.user_id,
+      u.user_name,
+      u.role,
+      u.q1_question,
+      u.q1_answer,
+      u.q2_question,
+      u.q2_answer,
+      u.q3_question,
+      u.q3_answer,
+      u.source,
+      u.created_at
+    );
+  }
+
+  console.log('[SEED] Demo database successfully seeded with users, projects, standups, and logs.');
 }
 
 if (process.argv[1]?.endsWith('seed.ts') || process.argv[1]?.endsWith('seed.js')) {

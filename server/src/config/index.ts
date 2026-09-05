@@ -10,5 +10,5 @@ export const config = {
   sessionSecret: process.env.SESSION_SECRET || 'dev_secret_enterprise_command_center_2026',
   sessionExpiryHours: parseInt(process.env.SESSION_EXPIRY_HOURS || '24', 10),
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || 'dummy_token'
+  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '8202986103:AAHaO9BrVcPU_8_AIdFBm9L4LjlM8yLxAi0'
 };

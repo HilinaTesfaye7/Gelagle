@@ -31,14 +31,16 @@ export function createApp(): Express {
   app.use('/', apiRouter);
 
   // Static Frontend files if built
-  const clientDist = path.resolve(process.cwd(), 'client/dist');
-  if (fs.existsSync(clientDist)) {
-    app.use(express.static(clientDist));
+  const distPath = fs.existsSync(path.resolve(process.cwd(), 'dist'))
+    ? path.resolve(process.cwd(), 'dist')
+    : path.resolve(process.cwd(), 'client/dist');
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
     app.get('*', (req, res, next) => {
       if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
         return next();
       }
-      res.sendFile(path.join(clientDist, 'index.html'));
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 

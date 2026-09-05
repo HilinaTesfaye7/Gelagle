@@ -182,7 +182,8 @@ export function createRouter(): Router {
   router.post('/telegram/generate-code', authenticate, telegramController.generateCode);
   router.post('/telegram/unlink', authenticate, telegramController.unlink);
   router.post('/telegram/link', authenticate, validateBody(manualLinkSchema), telegramController.manualLink);
-  router.post('/telegram/webhook', validateBody(simulateBotSchema), telegramController.simulateBotWebhook);
+  router.post('/telegram/webhook', telegramController.simulateBotWebhook);
+  router.post('/telegram/setup-webhook', telegramController.setupWebhook);
   router.post('/telegram/send-daily-update', authenticate, telegramController.sendDailyUpdate);
   router.post('/telegram/dispatch-daily-updates', authenticate, telegramController.dispatchDailyUpdates);
   router.post('/telegram/configure-token', authenticate, telegramController.configureToken);

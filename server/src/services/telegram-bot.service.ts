@@ -165,18 +165,28 @@ export class TelegramBotService {
         if (data.ok && Array.isArray(data.result)) {
           for (const update of data.result) {
             this.offset = update.update_id + 1;
-
-            if (update.callback_query) {
-              await this.handleCallbackQuery(update.callback_query);
-            } else if (update.message && update.message.text) {
-              await this.handleTextMessage(update.message);
-            }
+            await this.processUpdate(update);
           }
         }
       } catch (err: any) {
         if (err.name === 'AbortError') break;
         await new Promise((r) => setTimeout(r, 4000));
       }
+    }
+  }
+
+  /**
+   * Process a single incoming update from Telegram (used by Webhooks & Polling)
+   */
+  async processUpdate(update: any): Promise<void> {
+    try {
+      if (update.callback_query) {
+        await this.handleCallbackQuery(update.callback_query);
+      } else if (update.message && update.message.text) {
+        await this.handleTextMessage(update.message);
+      }
+    } catch (err) {
+      console.error('[TELEGRAM BOT] Error processing update:', err);
     }
   }
 

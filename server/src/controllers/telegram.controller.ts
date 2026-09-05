@@ -69,8 +69,38 @@ export class TelegramController {
 
   simulateBotWebhook = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // 1. Check if this is a real Telegram webhook update from Telegram's servers
+      if (req.body && (req.body.update_id !== undefined || req.body.message || req.body.callback_query)) {
+        await telegramBotInstance.processUpdate(req.body);
+        res.status(200).json({ ok: true });
+        return;
+      }
+
+      // 2. Otherwise handle in-app simulator command
       const response = this.telegramService.handleBotCommand(req.body);
       res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  setupWebhook = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const token = process.env.TELEGRAM_BOT_TOKEN;
+      if (!token || token.includes('dummy')) {
+        res.status(400).json({ error: 'No Telegram bot token configured in environment variables.' });
+        return;
+      }
+      const host = req.headers.host;
+      const protocol = (req.headers['x-forwarded-proto'] as string) || 'https';
+      const webhookUrl = req.body?.webhookUrl || `${protocol}://${host}/api/telegram/webhook`;
+      const tgRes = await fetch(`https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
+      const tgData = await tgRes.json();
+      res.status(200).json({
+        message: 'Telegram webhook configured',
+        webhookUrl,
+        telegramResponse: tgData
+      });
     } catch (error) {
       next(error);
     }

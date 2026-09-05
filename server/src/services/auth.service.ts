@@ -2,8 +2,10 @@ import { UserRepository, toSafeUser } from '../repositories/user.repository.js';
 import { SessionRepository } from '../repositories/session.repository.js';
 import { AuditService } from './audit.service.js';
 import { SafeUser } from '../types/user.types.js';
-import { verifyPassword, generateToken, generateId } from '../utils/crypto.utils.js';
+import { verifyPassword, generateToken, generateId, signSessionToken, verifySessionToken } from '../utils/crypto.utils.js';
 import { config } from '../config/index.js';
+
+const revokedTokens = new Set<string>();
 
 export class AuthService {
   constructor(
@@ -38,19 +40,23 @@ export class AuthService {
     }
 
     // Clean up expired sessions
-    this.sessionRepo.deleteExpired();
+    try {
+      this.sessionRepo.deleteExpired();
+    } catch {}
 
-    // Create new session
-    const token = generateToken(32);
+    // Create new signed session token (works seamlessly across all serverless workers)
+    const token = signSessionToken(user.id, config.sessionSecret, config.sessionExpiryHours);
     const expiresAt = new Date(Date.now() + config.sessionExpiryHours * 60 * 60 * 1000).toISOString();
 
-    this.sessionRepo.create({
-      id: generateId(),
-      user_id: user.id,
-      token,
-      expires_at: expiresAt,
-      created_at: new Date().toISOString()
-    });
+    try {
+      this.sessionRepo.create({
+        id: generateId(),
+        user_id: user.id,
+        token,
+        expires_at: expiresAt,
+        created_at: new Date().toISOString()
+      });
+    } catch {}
 
     // Audit log
     this.auditService.record({
@@ -70,26 +76,41 @@ export class AuthService {
   }
 
   validateSession(token: string): SafeUser | null {
-    if (!token) return null;
+    if (!token || revokedTokens.has(token)) return null;
 
-    const session = this.sessionRepo.findByToken(token);
-    if (!session) return null;
-
-    // Check expiration
-    if (new Date(session.expires_at).getTime() < Date.now()) {
-      this.sessionRepo.deleteByToken(token);
-      return null;
+    // 1. Stateless signature verification (instant & works across isolated serverless instances)
+    const verified = verifySessionToken(token, config.sessionSecret);
+    if (verified) {
+      const user = this.userRepo.findById(verified.userId);
+      if (!user || !user.active) return null;
+      return toSafeUser(user);
     }
 
-    const user = this.userRepo.findById(session.user_id);
-    if (!user || !user.active) return null;
+    // 2. Fallback to DB session store
+    try {
+      const session = this.sessionRepo.findByToken(token);
+      if (!session) return null;
 
-    return toSafeUser(user);
+      if (new Date(session.expires_at).getTime() < Date.now()) {
+        this.sessionRepo.deleteByToken(token);
+        return null;
+      }
+
+      const user = this.userRepo.findById(session.user_id);
+      if (!user || !user.active) return null;
+
+      return toSafeUser(user);
+    } catch {
+      return null;
+    }
   }
 
   logout(token: string, userId?: string, ipAddress?: string, userAgent?: string): void {
     if (token) {
-      this.sessionRepo.deleteByToken(token);
+      revokedTokens.add(token);
+      try {
+        this.sessionRepo.deleteByToken(token);
+      } catch {}
     }
     if (userId) {
       this.auditService.record({

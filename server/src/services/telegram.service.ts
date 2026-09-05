@@ -5,6 +5,7 @@ import { ProjectRepository } from '../repositories/project.repository.js';
 import { AuditService } from './audit.service.js';
 import { TelegramAccount, TelegramBotMessage, TelegramBotResponse } from '../types/telegram.types.js';
 import { generateId } from '../utils/crypto.utils.js';
+import { config } from '../config/index.js';
 
 export class TelegramService {
   constructor(
@@ -239,7 +240,7 @@ export class TelegramService {
   }
 
   async sendTelegramMessage(chatId: string, text: string, replyMarkup?: any): Promise<boolean> {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const token = process.env.TELEGRAM_BOT_TOKEN || config.telegramBotToken;
     if (!token || token.includes('dummy')) {
       console.log(`[TELEGRAM] Mock Dispatch to Chat ID ${chatId}:\n${text}`);
       return true;
@@ -268,7 +269,7 @@ export class TelegramService {
   }
 
   async editTelegramMessage(chatId: string, messageId: number, text: string, replyMarkup?: any): Promise<boolean> {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const token = process.env.TELEGRAM_BOT_TOKEN || config.telegramBotToken;
     if (!token || token.includes('dummy')) return true;
 
     try {
@@ -295,7 +296,7 @@ export class TelegramService {
   }
 
   async answerCallbackQuery(callbackQueryId: string, text?: string, showAlert = false): Promise<boolean> {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const token = process.env.TELEGRAM_BOT_TOKEN || config.telegramBotToken;
     if (!token || token.includes('dummy')) return true;
 
     try {

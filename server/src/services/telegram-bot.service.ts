@@ -7,6 +7,7 @@ import { DailyUpdateService } from './daily-update.service.js';
 import { AuditService } from './audit.service.js';
 import { hashPassword, generateId } from '../utils/crypto.utils.js';
 import { RoleType } from '../rbac/roles.js';
+import { config } from '../config/index.js';
 
 export const ROLE_DEFINITIONS: { id: RoleType; label: string }[] = [
   { id: 'PROJECT_MANAGER', label: '🎯 Project Manager' },
@@ -103,7 +104,7 @@ export class TelegramBotService {
   }
 
   async start(): Promise<boolean> {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const token = process.env.TELEGRAM_BOT_TOKEN || config.telegramBotToken;
     if (!token || token.includes('dummy') || token === 'your_telegram_bot_token') {
       console.log('[TELEGRAM BOT] No real bot token configured. Telegram long-polling is idle.');
       return false;
@@ -139,7 +140,7 @@ export class TelegramBotService {
   }
 
   getBotStatus(): { isRunning: boolean; tokenConfigured: boolean } {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const token = process.env.TELEGRAM_BOT_TOKEN || config.telegramBotToken;
     const tokenConfigured = !!token && !token.includes('dummy') && token !== 'your_telegram_bot_token';
     return {
       isRunning: this.isRunning,

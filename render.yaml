@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: gelagle-command-center
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TELEGRAM_BOT_TOKEN
+        value: 8202986103:AAHaO9BrVcPU_8_AIdFBm9L4LjlM8yLxAi0
+      - key: SESSION_SECRET
+        generateValue: true
